@@ -1,0 +1,64 @@
+let poseNet;
+let eyelX = [0]; // 左目のx座標
+let eyelY = [0]; // 左目のy座標
+let eyerX = [0]; // 右目のx座標
+let eyerY = [0]; // 右目のy座標
+let count;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+
+  video = createCapture(VIDEO);
+
+  // 2回描画されてしまうので隠す
+  video.hide();
+
+  // 検出
+  poseNet = ml5.poseNet(video);
+
+  // 検出したらgotPoses発動
+  poseNet.on('pose', gotPoses);
+}
+
+function gotPoses(poses) {
+  // posesが取得するデータ。 これが1つでも存在したら
+  count = poses.length;
+  for (let i=0; i<count; i++) {
+    let pose = poses[i].pose;
+
+    eyelX[i] = pose.leftEye.x;
+    eyelY[i] = pose.leftEye.y;
+    eyerX[i] = pose.rightEye.x;
+    eyerY[i] = pose.rightEye.y;
+  }
+}
+
+let theta = 0;
+function draw() {
+
+  background(255);
+
+  // ビデオ画像
+  image(video, 0, 0);
+ 
+  for (let i=0; i<count; i++) {
+    let width = (eyelX[i] - eyerX[i]) * 0.8;
+		
+    // 白目
+    fill(255);
+    circle(eyelX[i], eyelY[i], width);
+    circle(eyerX[i], eyerY[i], width);
+
+    let leftPosX = eyelX[i] + cos(theta) * 10;
+    let leftPosY = eyelY[i] + sin(theta) * 10;
+
+    let rightPosX = eyerX[i] + sin(theta) * 10;
+    let rightPosY = eyerY[i] + cos(theta) * 10;
+
+    // 黒目
+    fill(0);
+    circle(leftPosX, leftPosY, width / 3);
+    circle(rightPosX, rightPosY, width / 3);
+  }
+  theta += 0.1;
+}
